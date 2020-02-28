@@ -225,6 +225,12 @@ frecuencias_palabras <- frecuencias_palabras[, list(frec = sum(frecuencia)), by 
 frecuencias_palabras <- frecuencias_palabras[order(frec, decreasing = T)]
 wordcloud2(head(frecuencias_palabras, 100))
 
+matriz_coocurrencias <- fcm(matriz_bow)
+feat <- names(topfeatures(matriz_coocurrencias, 50))
+matriz_coocurrencias <- fcm_select(matriz_coocurrencias, pattern = feat)
+size <- log(colSums(dfm_select(matriz_coocurrencias, feat)))
+textplot_network(matriz_coocurrencias, min_freq = 0.8, vertex_size = size / max(size) * 3)
+
 # 4. Identificación de objetos similares con similitud coseno
 
 secop <- secop[anno_inicio_ejecucion == 2019]
