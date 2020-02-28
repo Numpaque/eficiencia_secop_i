@@ -87,6 +87,10 @@ descriptivos <- secop[, list(media = mean(dia_anno_inicio_ejecucion),
                        mediana = quantile(dia_anno_inicio_ejecucion, probs = 0.50),
                        count = .N), by = `Nombre de la Entidad`]
 
+descriptivos_filtrada <- descriptivos %>%
+  filter(count >= 20)
+
+View(descriptivos_filtrada)
 
 
 #################################################
@@ -223,6 +227,8 @@ wordcloud2(head(frecuencias_palabras, 100))
 
 # 4. Identificación de objetos similares con similitud coseno
 
+secop <- secop[anno_inicio_ejecucion == 2019]
+
 # Se realiza stemming (lematización) con el algoritmo de Porter
 secop$texto_limpio <- stemDocument(secop$texto_limpio, language = "spanish")
 
@@ -245,12 +251,18 @@ secop$grupos <- cutree(clustering, h = 0.3)
 secop[, cuantia_por_dia := `Cuantia Proceso`/duracion]
 secop[, promedio_grupo := mean(cuantia_por_dia), by = grupos]
 secop[, diferencia_absoluta := cuantia_por_dia - promedio_grupo]
-secop[, diferencia_porcentual := diferencia_absoluta/promedio_grupo]
+secop[, diferencia_porcentual := diferencia_absoluta/promedio_grupo*100]
 
 # Comparar variación porcentual con adiciones
 comparacion_con_adiciones <- data.frame(
   Adiciones = secop$`Valor Total de Adiciones`[secop$`Valor Total de Adiciones`  > 0],
   Diferencia = secop$diferencia_porcentual[secop$`Valor Total de Adiciones`  > 0])
 
+comparacion_con_adiciones <- comparacion_con_adiciones %>%
+  filter(Adiciones < quantile(comparacion_con_adiciones$Adiciones, probs = 0.95),
+         Diferencia < quantile(comparacion_con_adiciones$Diferencia, probs = 0.95))
+
 cor(comparacion_con_adiciones$Adiciones, comparacion_con_adiciones$Diferencia)
 plot(comparacion_con_adiciones)
+
+
