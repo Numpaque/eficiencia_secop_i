@@ -72,10 +72,11 @@ porcentaje_contratos_dura_cero_por_anno <-
   table(secop$`Anno Firma del Contrato`[secop$duracion == 0])/
   table(secop$`Anno Firma del Contrato`)
 
-plot(porcentaje_contratos_dura_cero_por_anno, type = "l")
+plot(porcentaje_contratos_dura_cero_por_anno*100, type = "l")
 
 # Porcentaje de contratos con duración de cero días por entidad
-duracion_cero_por_entidad <- secop[, sum(duracion == 0) / .N * 100, by = `Nombre de la Entidad`]
+duracion_cero_por_entidad <- secop[, list(porcentaje = sum(duracion == 0) / .N * 100,
+                                          conteo = .N), by = `Nombre de la Entidad`]
 
 # Tomar solo contratos que duren al menos 7 meses
 secop <- secop[duracion > 8*30]
@@ -266,9 +267,13 @@ comparacion_con_adiciones <- data.frame(
 
 comparacion_con_adiciones <- comparacion_con_adiciones %>%
   filter(Adiciones < quantile(comparacion_con_adiciones$Adiciones, probs = 0.95),
-         Diferencia < quantile(comparacion_con_adiciones$Diferencia, probs = 0.95))
+         Diferencia < quantile(comparacion_con_adiciones$Diferencia, probs = 0.95),
+         Diferencia != 0)
 
 cor(comparacion_con_adiciones$Adiciones, comparacion_con_adiciones$Diferencia)
-plot(comparacion_con_adiciones)
+plot_ly(comparacion_con_adiciones, x = ~Diferencia, y = ~Adiciones)
 
+comparacion_con_adiciones$Adiciones <- as.numeric(comparacion_con_adiciones$Adiciones)
 
+modelo <- lm(data = comparacion_con_adiciones, formula = Adiciones~Diferencia)
+summary(modelo)
